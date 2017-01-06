@@ -1,0 +1,29 @@
+package:
+   name: cyipopt
+   version: "0.1.6"
+
+source:
+  git_url: https://github.com/pkerichang/cyipopt.git
+
+build:
+  number: 0
+    
+requirements:
+  build:
+    - ipopt
+    - python
+    - cython
+    - numpy
+    - mingw # [win]
+    - libpython # [win]
+  run:
+    - ipopt
+    - python
+    - cython
+    - numpy
+    - six
+    - libpython # [win]
+
+about:
+   home: https://github.com/matthias-k/cyipopt
+   license: EPL
