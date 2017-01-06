@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
-"""
-cyipot: Python wrapper for the Ipopt optimization package, written in Cython.
+"""cyipopt: Python wrapper for the Ipopt optimization package, written in Cython.
+
+Modified by Eric Chang to work with the IPOPT distribution in anaconda channel pkerichang.
 
 Copyright (C) 2012 Amit Aides, 2015 Matthias Kümmerer
 Author: Matthias Kümmerer <matthias.kuemmerer@bethgelab.org>
@@ -10,85 +11,46 @@ License: EPL 1.0
 """
 from setuptools import setup
 from setuptools.extension import Extension
-from distutils.sysconfig import get_python_lib
-from Cython.Distutils import build_ext
 import Cython.Distutils
 import Cython.Compiler.Options
 import numpy as np
-import os.path
+import os
 import sys
-import six
-
 
 PACKAGE_NAME = 'ipopt'
 VERSION = '0.1.6'
-DESCRIPTION = 'A Cython wrapper to the IPOPT optimization package'
-AUTHOR = 'Matthias Kümmerer'
-EMAIL = 'matthias.kuemmerer@bethgelab.org'
-URL = "https://github.com/matthiask/cyipopt"
-
 
 
 def main_win32():
-    IPOPT_ICLUDE_DIRS=['include_mt/coin', np.get_include()]
-    IPOPT_LIBS=['Ipopt39', 'IpoptFSS']
-    IPOPT_LIB_DIRS=['lib_mt/x64/release']
-    IPOPT_DLL=['Ipopt39.dll', 'IpoptFSS39.dll']
-
-    setup(
-        name=PACKAGE_NAME,
-        version=VERSION,
-        description=DESCRIPTION,
-        author=AUTHOR,
-        author_email=EMAIL,
-        url=URL,
-        packages=[PACKAGE_NAME],
-        cmdclass = {'build_ext': build_ext},
-        ext_modules = [
-            Extension(
-                PACKAGE_NAME + '.' + 'cyipopt',
-                ['src/cyipopt.pyx'],
-                include_dirs=IPOPT_ICLUDE_DIRS,
-                libraries=IPOPT_LIBS,
-                library_dirs=IPOPT_LIB_DIRS
-            )
-        ],
-        data_files=[(os.path.join(get_python_lib(), PACKAGE_NAME), [os.path.join(IPOPT_LIB_DIRS[0], dll) for dll in IPOPT_DLL])] if IPOPT_DLL else None
-    )
-
-
-def pkgconfig(*packages, **kw):
-    """Based on http://code.activestate.com/recipes/502261-python-distutils-pkg-config/#c2"""
-
-    import subprocess as sp
-
-    flag_map = {'-I': 'include_dirs', '-L': 'library_dirs', '-l': 'libraries'}
-    output = sp.Popen(["pkg-config", "--libs", "--cflags"] + list(packages), stdout=sp.PIPE).communicate()[0]
-    if six.PY3:
-        output = output.decode('utf8')
-    for token in output.split():
-        if token[:2] in flag_map:
-            kw.setdefault(flag_map.get(token[:2]), []).append(token[2:])
-        else:
-            kw.setdefault('extra_compile_args', []).append(token)
-
-    kw['include_dirs'] += [np.get_include()]
-
-    return kw
+    raise Exception('Windows is not supported yet.')
 
 
 def main_unix():
-    setup(name = PACKAGE_NAME,
+    # if installing using Anaconda, PREFIX will be set properly.
+    IPOPT_DIR = os.getenv('PREFIX')
+    if IPOPT_DIR is None:
+        raise Exception('Please set $PREFIX to be IPOPT installation directory.')
+
+    IPOPT_LIB = os.path.join(IPOPT_DIR, 'lib')
+    IPOPT_INC = os.path.join(IPOPT_DIR, 'include/coin/')
+    extension = Extension('cyipopt',
+                          ['src/cyipopt.pyx', ],
+                          # assuming using IPOPT with MUMPS and Metis, compiled against MKL.
+                          # this is the setup in my Anaconda channel.
+                          libraries=['ipopt', 'coinmumps', 'coinmetis',
+                                     'mkl_intel_ilp64', 'mkl_intel_thread', 'mkl_core', 'iomp5',
+                                     'pthread', 'm', 'dl'],
+                          library_dirs=[IPOPT_LIB],
+                          include_dirs=[np.get_include(), IPOPT_INC, ],
+                          )
+
+    setup(name=PACKAGE_NAME,
           version=VERSION,
-          packages = [PACKAGE_NAME],
-          cmdclass = {'build_ext': Cython.Distutils.build_ext},
+          packages=[PACKAGE_NAME],
+          cmdclass={'build_ext': Cython.Distutils.build_ext},
           include_package_data=True,
-          ext_modules = [Extension("cyipopt",
-                                   ['src/cyipopt.pyx'],
-                                   **pkgconfig('ipopt')
-                                   )
-                        ]
-         )
+          ext_modules=[extension],
+          )
 
 
 if __name__ == '__main__':

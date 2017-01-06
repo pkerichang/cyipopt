@@ -1,6 +1,6 @@
-This repository has been forked from <https://bitbucket.org/amitibo/cyipopt>.
-The code is now able to handle exceptions in the callback functions. Also,
-a docker container for easy usage is provided.
+This repository has been forked from <https://github.com/matthias-k/cyipopt>.
+The setup.py script has been modified to work with the IPOPT distribution
+that can be installed from my Anaconda channel.
 
 ==================
 README for cyipopt

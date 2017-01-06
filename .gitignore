@@ -64,3 +64,6 @@ target/
 
 # CoinHSL - proprietary files so no add in the repo
 coinhsl*
+
+# Pycharm
+.idea
